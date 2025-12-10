@@ -1,0 +1,3 @@
+ALTER TABLE certificate_request 
+MODIFY COLUMN date_issued VARCHAR(50) NOT NULL,
+MODIFY COLUMN date_expired VARCHAR(50) NOT NULL;

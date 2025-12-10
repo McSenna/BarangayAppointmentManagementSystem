@@ -1,57 +1,74 @@
-<?php 
-
+<?php
 include_once '../connection.php';
 
+try {
 
-try{
+    // Read form values
+    $user_id        = $con->real_escape_string($_POST['user_id']);
+    $purpose        = $con->real_escape_string($_POST['purpose']);
+    $selected_date  = $con->real_escape_string($_POST['date']);   // date_request
+    $selected_time  = $con->real_escape_string($_POST['time']);   // time_request
+    $document_type  = $con->real_escape_string($_POST['document_type']);
 
-  $user_id = $con->real_escape_string($_POST['user_id']);
+    // Generate unique ID
+    date_default_timezone_set('Asia/Manila');
+    $now = new DateTime();
 
-  $purpose = $con->real_escape_string($_POST['purpose']);
+    // Auto date issued (current system date/time)
+    $date_issued = $now->format("m/d/Y g:i A");
 
-  date_default_timezone_set('Asia/Manila');
-  $date = new DateTime();
-  $uniqid = uniqid(mt_rand().$date->format("mdYHisv").rand());
-  $date_issued = '';
-  $date_expire = '';
-  $status = 'PENDING';
-  $date_request = $date->format("m/d/Y");
+    // Date expired = date issued + 3 days
+    $expire_date = clone $now;
+    $expire_date->modify("+3 days");
+    $date_expired = $expire_date->format("m/d/Y g:i A");
 
-  $sql_residency = "INSERT INTO `certificate_request`(`id`, `residence_id`,  `purpose`, `date_request`,`date_issued`, `date_expired`, `status`) VALUES (?,?,?,?,?,?,?)";
-  $stmt = $con->prepare($sql_residency) or die ($con->error);
-  $stmt->bind_param('sssssss',$uniqid,$user_id,$purpose,$date_request,$date_issued,$date_expire,$status);
-  $stmt->execute();
-  $stmt->close();
+    // Combine resident date + time
+    $datetime_request = date("Y-m-d H:i", strtotime("$selected_date $selected_time"));
 
-  $sql_user = "SELECT first_name, last_name FROM users WHERE id = ?";
-  $stmt_user = $con->prepare($sql_user) or die ($con->error);
-  $stmt_user->bind_param('s',$user_id);
-  $stmt_user->execute();
-  $result_user = $stmt_user->get_result();
-  $row_user = $result_user->fetch_assoc();
-  $first_name = $row_user['first_name'];
-  $last_name = $row_user['last_name'];
-  $status_activity_log = 'create';
+    // System-generated unique ID
+    $uniqid = uniqid(mt_rand() . $now->format("mdYHisv") . rand());
 
-  $date_activity = $now = date("j-n-Y g:i A"); 
-  $message =  'RESIDENT - '.$user_id. ': '.$first_name.' '. $last_name .' | '. 'REQUEST CERTIFICATE - '.strtoupper($purpose);
-  $sql_system_logs= "INSERT INTO activity_log (`message`, `date`,`status`) VALUES (?,?,?)";
-  $query_system_logs = $con->prepare($sql_system_logs) or die ($con->error);
-  $query_system_logs->bind_param('sss',$message,$date_activity,$status_activity_log);
-  $query_system_logs->execute();
-  $query_system_logs->close();
+    // Default status
+    $status = "PENDING";
 
+    // Insert into table
+    $sql = "INSERT INTO `certificate_request`
+            (`id`, `residence_id`, `certificate_type`, `purpose`,
+             `date_request`, `time_request`, `datetime_request`,
+             `date_issued`, `date_expired`, `status`)
+            VALUES (?,?,?,?,?,?,?,?,?,?)";
 
+    $stmt = $con->prepare($sql) or die($con->error);
+    $stmt->bind_param(
+        'ssssssssss',
+        $uniqid,
+        $user_id,
+        $document_type,
+        $purpose,
+        $selected_date,
+        $selected_time,
+        $datetime_request,
+        $date_issued,
+        $date_expired,
+        $status
+    );
 
+    $stmt->execute();
+    $stmt->close();
 
+    // Log message
+    $log_message = "RESIDENT - $user_id submitted a certificate request ($document_type)";
 
+    $date_activity = date("m/d/Y g:i A");
+    $log_status = "create";
 
-}catch(Exception $e){
-  echo $e->getMessage();
+    $sql_log = "INSERT INTO activity_log (`message`, `date`, `status`) VALUES (?,?,?)";
+    $stmt_log = $con->prepare($sql_log);
+    $stmt_log->bind_param("sss", $log_message, $date_activity, $log_status);
+    $stmt_log->execute();
+    $stmt_log->close();
+
+} catch (Exception $e) {
+    echo $e->getMessage();
 }
-
-
-
-
-
 ?>

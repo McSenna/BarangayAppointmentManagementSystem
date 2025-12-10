@@ -465,7 +465,38 @@ width: 100%;
                   <div class="form-group">
                     <label>Purpose</label>
                     <input type="text" name="purpose" id="purpose" class="form-control text-uppercase" required>
+                                              
                   </div>
+
+                  <div class="col-sm-6">
+                    <div class="form-group">
+                        <label>Date</label>
+                          <input type="date" name="date" id="date" class="form-control" required>
+                    </div>
+                  </div>
+
+                  <div class="col-sm-6">
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="time" name="time" id="time" class="form-control" required>
+                    </div>
+                  </div>
+
+                  <div class="col-sm-12">
+                    <div class="form-group">
+                        <label>Type of Document</label>
+                        <select name="document_type" id="document_type" class="form-control" required>
+                            <option value="" disabled selected>Select Document</option>
+                            <option value="Barangay Clearance">Barangay Clearance</option>
+                            <option value="Certificate of Residency">Certificate of Residency</option>
+                            <option value="Indigency Certificate">Indigency Certificate</option>
+                            <option value="Business Permit">Business Permit</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+
                 </div>
               </div>
 
